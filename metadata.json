@@ -1,5 +1,5 @@
 {
-  "name": "Sistem Database Guru Wali",
-  "description": "Sistem manajemen terintegrasi untuk Jurnal, Absensi, dan Bimbingan Guru Wali UPT SMKN 4 SINJAI.",
+  "name": "MANAJEMEN GURU MAPEL",
+  "description": "Sistem manajemen terintegrasi untuk Jurnal, Absensi, dan Administrasi Guru Mata Pelajaran UPT SMKN 4 SINJAI.",
   "requestFramePermissions": []
 }

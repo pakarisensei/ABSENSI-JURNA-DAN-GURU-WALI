@@ -2,7 +2,7 @@
 /**
  * PANDUAN GOOGLE APPS SCRIPT:
  * 
- * 1. Buka Google Sheets (beri nama "Database Guru Wali").
+ * 1. Buka Google Sheets (beri nama "Manajemen Guru Mapel").
  * 2. Extensions > Apps Script.
  * 3. Copy-Paste kode di bawah ini ke editor Apps Script:
  * 
@@ -24,7 +24,7 @@
  * 5. Copy URL-nya dan tempel di SCRIPT_URL di bawah ini.
  */
 
-const SCRIPT_URL = https://script.google.com/macros/s/AKfycbyWtVYu1_zH7gfSAgJoSADb6LSk50416pqfBzJO8AGpgzuC9NW4sK6G0Sdpr6hm_e2qew/exec;
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyWtVYu1_zH7gfSAgJoSADb6LSk50416pqfBzJO8AGpgzuC9NW4sK6G0Sdpr6hm_e2qew/exec';
 
 export const cloudSync = {
   save: async (data: any) => {

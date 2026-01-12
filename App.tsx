@@ -101,12 +101,12 @@ const App: React.FC = () => {
           <div className="text-center md:text-right">
             <div className="bg-teal-50 px-4 py-2 rounded-lg border border-teal-100">
               <p className="text-sm text-gray-600">{pengaturan.namaSekolah}</p>
-              <p className="font-semibold text-teal-700">Database Guru Wali (Cloud Active)</p>
+              <p className="font-semibold text-teal-700">Manajemen Guru Mapel (Cloud Active)</p>
             </div>
           </div>
         </div>
         <div className="text-center border-t border-gray-200 pt-4">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2 tracking-tight">SISTEM DATABASE GURU WALI</h1>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2 tracking-tight uppercase">MANAJEMEN GURU MAPEL</h1>
         </div>
       </div>
 
@@ -137,7 +137,7 @@ const App: React.FC = () => {
       </div>
 
       <footer className="text-center py-6 mt-8">
-        <p className="text-gray-500 text-sm">© 2025 Database Guru Wali - {pengaturan.namaSekolah}</p>
+        <p className="text-gray-500 text-sm">© 2025 MANAJEMEN GURU MAPEL - {pengaturan.namaSekolah}</p>
       </footer>
 
       {notification.show && (
