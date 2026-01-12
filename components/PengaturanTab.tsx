@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { PengaturanData, SiswaBinaan } from '../types';
+import { PengaturanData } from '../types';
 
 interface PengaturanTabProps {
   pengaturan: PengaturanData;
@@ -19,6 +19,7 @@ const PengaturanTab: React.FC<PengaturanTabProps> = ({
 }) => {
   const [localData, setLocalData] = useState(pengaturan);
   const [binSiswa, setBinSiswa] = useState({ kelas: '', nama: '' });
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,16 +27,52 @@ const PengaturanTab: React.FC<PengaturanTabProps> = ({
     showNotification("✅ Pengaturan profil disimpan.");
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Fungsi Kompresi Gambar agar muat di Google Sheets (Limit 50k char)
+  const compressImage = (base64Str: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = base64Str;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 150; // Ukuran kecil sudah cukup untuk profil
+        const MAX_HEIGHT = 150;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        // Kompres kualitas ke 0.7 (70%)
+        resolve(canvas.toDataURL('image/jpeg', 0.7));
+      };
+    });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 1024 * 1024) { // Limit 1MB to keep cloud sync fast
-        showNotification("❌ Ukuran foto terlalu besar (Max 1MB)");
-        return;
-      }
+      setIsProcessing(true);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setLocalData({ ...localData, foto: reader.result as string });
+      reader.onloadend = async () => {
+        const base64 = reader.result as string;
+        // Perkecil gambar sebelum dimasukkan ke state
+        const compressed = await compressImage(base64);
+        setLocalData({ ...localData, foto: compressed });
+        setIsProcessing(false);
       };
       reader.readAsDataURL(file);
     }
@@ -76,25 +113,31 @@ const PengaturanTab: React.FC<PengaturanTabProps> = ({
         {/* Bagian Foto Profil */}
         <div className="flex flex-col md:flex-row items-center gap-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
           <div className="relative group">
-            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg">
+            <div className={`w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg ${isProcessing ? 'opacity-50' : ''}`}>
               <img 
                 src={localData.foto} 
                 alt="Preview" 
                 className="w-full h-full object-cover"
               />
+              {isProcessing && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="loader !border-teal-600" />
+                </div>
+              )}
             </div>
-            <label className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 text-white text-xs opacity-0 group-hover:opacity-100 rounded-full cursor-pointer transition-opacity">
-              Ganti Foto
+            <label className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 text-white text-[10px] opacity-0 group-hover:opacity-100 rounded-full cursor-pointer transition-opacity uppercase font-bold">
+              Klik Ganti
               <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
             </label>
           </div>
           <div className="flex-grow text-center md:text-left">
             <h4 className="font-bold text-gray-700">Foto Profil</h4>
-            <p className="text-xs text-gray-500 mb-3">Klik pada gambar atau tombol di bawah untuk mengganti foto (Rekomendasi: Persegi, Max 1MB)</p>
+            <p className="text-[10px] text-gray-500 mb-3 uppercase tracking-tighter">Sistem akan otomatis mengompres foto agar lancar disimpan di Cloud.</p>
             <input 
               type="file" 
               accept="image/*" 
               onChange={handleFileChange}
+              disabled={isProcessing}
               className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 cursor-pointer"
             />
           </div>
