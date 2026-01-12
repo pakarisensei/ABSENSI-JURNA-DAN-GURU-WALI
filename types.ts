@@ -39,10 +39,12 @@ export interface AbsensiData {
 }
 
 export interface WaliRecord {
+  id: number;
   siswa: string;
   kelas: string;
   tahun: number;
   minggu: number;
+  kategori: 'Akademik' | 'Karakter' | 'Kompetensi' | 'Sosial/Ekonomi' | 'Lainnya';
   hadir: string;
   sakit: string;
   izin: string;

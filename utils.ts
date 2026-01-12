@@ -19,3 +19,25 @@ export const getWeekNumber = (d: Date): { year: number; week: number } => {
   const weekNo = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
   return { year: date.getUTCFullYear(), week: weekNo };
 };
+
+export const formatMinggu = (year: number, week: number): string => {
+  // Mencari hari Kamis di minggu tersebut (standar ISO 8601)
+  const d = new Date(year, 0, 1 + (week - 1) * 7);
+  const dayOffset = d.getDay() || 7;
+  const targetDate = new Date(d);
+  targetDate.setDate(d.getDate() + (4 - dayOffset));
+  
+  const monthNames = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni", 
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+  ];
+  
+  const month = monthNames[targetDate.getMonth()];
+  
+  // Menghitung minggu ke-berapa di bulan tersebut
+  const firstDayOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
+  const startDay = firstDayOfMonth.getDay() || 7;
+  const weekOfMonth = Math.ceil((targetDate.getDate() + startDay - 1) / 7);
+  
+  return `Minggu ${weekOfMonth} ${month} ${targetDate.getFullYear()}`;
+};

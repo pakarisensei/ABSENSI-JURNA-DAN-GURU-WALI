@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { JurnalData, AbsensiData, PengaturanData, WaliRecord, JurnalEntry } from '../types';
-import { formatHariTanggal } from '../utils';
+import { formatHariTanggal, formatMinggu } from '../utils';
 
 interface LaporanTabProps {
   jurnalData: JurnalData;
@@ -30,10 +30,8 @@ const LaporanTab: React.FC<LaporanTabProps> = ({
   const cetakJurnal = () => {
     try {
       const doc = new jsPDF();
-      const period = `${filter.bulan}/${filter.tahun}`;
       const head = [['No', 'Hari, Tanggal', 'Jam', 'Kelas', 'Materi', 'Kegiatan']];
       const body: any[] = [];
-      
       let counter = 1;
       Object.entries(jurnalData)
         .filter(([date]) => date.startsWith(`${filter.tahun}-${filter.bulan}`))
@@ -44,105 +42,47 @@ const LaporanTab: React.FC<LaporanTabProps> = ({
           });
         });
 
-      if (body.length === 0) return showNotification("Tidak ada data jurnal untuk periode ini.");
+      if (body.length === 0) return showNotification("Tidak ada data jurnal.");
 
       doc.setFontSize(14);
       doc.text("JURNAL PEMBELAJARAN", doc.internal.pageSize.getWidth()/2, 15, { align: 'center' });
-      doc.setFontSize(10);
-      doc.text(`Guru: ${pengaturan.nama}`, 14, 25);
-      doc.text(`Periode: ${period}`, 14, 30);
-
-      autoTable(doc, {
-        startY: 35,
-        head: head,
-        body: body,
-        styles: { fontSize: 8 },
-        columnStyles: { 4: { cellWidth: 50 }, 5: { cellWidth: 50 } }
-      });
-
-      doc.save(`Jurnal_${pengaturan.nama}_${filter.bulan}_${filter.tahun}.pdf`);
-    } catch (err) {
-      console.error(err);
-      showNotification("Gagal mencetak Jurnal. Pastikan data tersedia.");
-    }
+      autoTable(doc, { startY: 35, head: head, body: body, styles: { fontSize: 8 } });
+      doc.save(`Jurnal_${filter.bulan}_${filter.tahun}.pdf`);
+    } catch (err) { showNotification("Gagal cetak Jurnal."); }
   };
 
   const cetakAbsensi = () => {
     try {
       const doc = new jsPDF();
-      const periodStr = `${filter.bulan}/${filter.tahun}`;
       const periodKey = `${filter.tahun}-${filter.bulan}`;
-
       const relevantDates = Object.keys(absensiData).filter(d => d.startsWith(periodKey));
-      
-      if (relevantDates.length === 0) {
-        return showNotification("Tidak ada data absensi untuk periode ini.");
-      }
+      if (relevantDates.length === 0) return showNotification("Tidak ada data absensi.");
 
       const uniqueClasses = new Set<string>();
-      relevantDates.forEach(date => {
-        Object.keys(absensiData[date]).forEach(cls => uniqueClasses.add(cls));
-      });
+      relevantDates.forEach(date => Object.keys(absensiData[date]).forEach(cls => uniqueClasses.add(cls)));
 
-      let isFirstPage = true;
-
-      Array.from(uniqueClasses).sort().forEach(kelas => {
-        if (!isFirstPage) doc.addPage();
-        isFirstPage = false;
-
+      Array.from(uniqueClasses).sort().forEach((kelas, idx) => {
+        if (idx > 0) doc.addPage();
         doc.setFontSize(14);
-        doc.text("REKAPITULASI KEHADIRAN MURID", doc.internal.pageSize.getWidth()/2, 15, { align: 'center' });
-        doc.setFontSize(10);
-        doc.text(`Sekolah: ${pengaturan.namaSekolah}`, 14, 25);
-        doc.text(`Guru: ${pengaturan.nama}`, 14, 30);
-        doc.text(`Kelas: ${kelas} | Periode: ${periodStr}`, 14, 35);
-
-        const head = [['No', 'Nama Murid', 'H', 'S', 'I', 'A', 'Total %']];
-        const body: any[] = [];
-        
-        const muridList = (siswaData[kelas] || []).sort();
-        
-        muridList.forEach((nama, idx) => {
-          let h = 0, s = 0, i_count = 0, a = 0;
-          let totalHari = 0;
-
-          relevantDates.forEach(date => {
-            const status = absensiData[date]?.[kelas]?.[nama];
-            if (status) {
-              totalHari++;
-              if (status === 'H') h++;
-              else if (status === 'S') s++;
-              else if (status === 'I') i_count++;
-              else if (status === 'A') a++;
-            }
+        doc.text(`REKAP ABSENSI - ${kelas}`, doc.internal.pageSize.getWidth()/2, 15, { align: 'center' });
+        const body = (siswaData[kelas] || []).map((nama, i) => {
+          let h=0, s=0, ic=0, a=0;
+          relevantDates.forEach(d => {
+            const st = absensiData[d]?.[kelas]?.[nama];
+            if (st==='H') h++; else if (st==='S') s++; else if (st==='I') ic++; else if (st==='A') a++;
           });
-
-          const persentase = totalHari > 0 ? ((h / totalHari) * 100).toFixed(1) + '%' : '-';
-          body.push([idx + 1, nama, h, s, i_count, a, persentase]);
+          return [i+1, nama, h, s, ic, a];
         });
-
-        autoTable(doc, {
-          startY: 40,
-          head: head,
-          body: body,
-          theme: 'grid',
-          headStyles: { fillColor: [13, 148, 136] },
-          styles: { fontSize: 9 }
-        });
+        autoTable(doc, { startY: 25, head: [['No', 'Nama', 'H', 'S', 'I', 'A']], body });
       });
-
-      doc.save(`Rekap_Absensi_${filter.bulan}_${filter.tahun}.pdf`);
-    } catch (err) {
-      console.error(err);
-      showNotification("Gagal mencetak Absensi.");
-    }
+      doc.save(`Absensi_${filter.bulan}_${filter.tahun}.pdf`);
+    } catch (err) { showNotification("Gagal cetak Absensi."); }
   };
 
   const cetakLaporanWali = () => {
     try {
       const doc = new jsPDF('l', 'mm', 'a4');
-      const period = filter.tahun;
-      const head = [['No', 'Murid', 'Kelas', 'Thn/Mgg', 'H', 'S', 'I', 'A', 'Uraian Bimbingan', 'Tindak Lanjut']];
+      const head = [['No', 'Murid', 'Kelas', 'Waktu', 'Kategori', 'H/S/I/A', 'Uraian Masalah', 'Strategi/Tindak Lanjut']];
       
       const body = waliData
         .filter(r => r.tahun.toString() === filter.tahun)
@@ -151,22 +91,19 @@ const LaporanTab: React.FC<LaporanTabProps> = ({
           idx + 1,
           r.siswa,
           r.kelas,
-          `${r.tahun}/W${r.minggu}`,
-          r.hadir,
-          r.sakit,
-          r.izin,
-          r.alfa,
+          formatMinggu(r.tahun, r.minggu),
+          r.kategori,
+          `${r.hadir}/${r.sakit}/${r.izin}/${r.alfa}`,
           r.uraian,
           r.tindakLanjut
         ]);
 
-      if (body.length === 0) return showNotification("Tidak ada data bimbingan wali untuk tahun ini.");
+      if (body.length === 0) return showNotification("Tidak ada data pendampingan.");
 
       doc.setFontSize(14);
-      doc.text("LAPORAN BIMBINGAN GURU WALI MURID", doc.internal.pageSize.getWidth()/2, 15, { align: 'center' });
+      doc.text("LAPORAN PENDAMPINGAN INTENSIF GURU WALI", doc.internal.pageSize.getWidth()/2, 15, { align: 'center' });
       doc.setFontSize(10);
-      doc.text(`Guru Wali: ${pengaturan.nama}`, 14, 25);
-      doc.text(`Tahun: ${period}`, 14, 30);
+      doc.text(`Guru Wali: ${pengaturan.nama} | Tahun: ${filter.tahun}`, 14, 25);
 
       autoTable(doc, {
         startY: 35,
@@ -174,54 +111,43 @@ const LaporanTab: React.FC<LaporanTabProps> = ({
         body: body,
         styles: { fontSize: 7 },
         columnStyles: {
-          8: { cellWidth: 60 },
-          9: { cellWidth: 50 }
+          3: { cellWidth: 35 },
+          4: { cellWidth: 25 },
+          6: { cellWidth: 50 },
+          7: { cellWidth: 60 }
         }
       });
 
-      doc.save(`Laporan_Wali_${pengaturan.nama}_${filter.tahun}.pdf`);
-    } catch (err) {
-      console.error(err);
-      showNotification("Gagal mencetak Laporan Wali.");
-    }
+      doc.save(`Laporan_GuruWali_${filter.tahun}.pdf`);
+    } catch (err) { showNotification("Gagal cetak Laporan Wali."); }
   };
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">📊 Laporan & Cetak PDF</h2>
-      
-      <div className="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-100 grid grid-cols-2 gap-4">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6">📊 Administrasi & Pelaporan</h2>
+      <div className="bg-blue-50 p-4 rounded-lg mb-6 grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-1 text-blue-800">Bulan (Untuk Jurnal/Absensi)</label>
+          <label className="block text-sm font-medium mb-1">Bulan</label>
           <select value={filter.bulan} onChange={e => setFilter({...filter, bulan: e.target.value})} className="w-full p-3 border rounded-lg">
             {['01','02','03','04','05','06','07','08','09','10','11','12'].map(m => <option key={m} value={m}>{m}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1 text-blue-800">Tahun</label>
+          <label className="block text-sm font-medium mb-1">Tahun</label>
           <select value={filter.tahun} onChange={e => setFilter({...filter, tahun: e.target.value})} className="w-full p-3 border rounded-lg">
             {['2024','2025','2026'].map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <button onClick={cetakJurnal} className="p-6 border-2 border-teal-500 rounded-xl hover:bg-teal-50 transition text-left group">
-          <div className="text-3xl mb-2 group-hover:scale-110 transition">📝</div>
-          <h4 className="font-bold text-teal-800">Cetak Jurnal</h4>
-          <p className="text-xs text-gray-500">Unduh jurnal harian dalam format PDF</p>
+        <button onClick={cetakJurnal} className="p-6 border-2 border-teal-500 rounded-xl hover:bg-teal-50 text-left">
+          <h4 className="font-bold text-teal-800">📝 Cetak Jurnal</h4>
         </button>
-
-        <button onClick={cetakAbsensi} className="p-6 border-2 border-emerald-500 rounded-xl hover:bg-emerald-50 transition text-left group">
-          <div className="text-3xl mb-2 group-hover:scale-110 transition">✅</div>
-          <h4 className="font-bold text-emerald-800">Cetak Absensi</h4>
-          <p className="text-xs text-gray-500">Unduh rekap kehadiran bulanan</p>
+        <button onClick={cetakAbsensi} className="p-6 border-2 border-emerald-500 rounded-xl hover:bg-emerald-50 text-left">
+          <h4 className="font-bold text-emerald-800">✅ Cetak Absensi</h4>
         </button>
-
-        <button onClick={cetakLaporanWali} className="p-6 border-2 border-indigo-500 rounded-xl hover:bg-indigo-50 transition text-left group">
-          <div className="text-3xl mb-2 group-hover:scale-110 transition">🧑‍🏫</div>
-          <h4 className="font-bold text-indigo-800">Laporan Guru Wali</h4>
-          <p className="text-xs text-gray-500">Unduh rekap bimbingan murid binaan</p>
+        <button onClick={cetakLaporanWali} className="p-6 border-2 border-indigo-500 rounded-xl hover:bg-indigo-50 text-left">
+          <h4 className="font-bold text-indigo-800">🧑‍🏫 Laporan Guru Wali</h4>
         </button>
       </div>
     </div>

@@ -16,7 +16,7 @@ import SiswaTab from './components/SiswaTab';
 import KelasTab from './components/KelasTab';
 import PengaturanTab from './components/PengaturanTab';
 
-// Data Murid AP Bapak Ariansyah Imran
+// Data Murid AP Bapak Ariansyah Imran - Database Master
 const initialMuridData = {
   "X AP 1": ["Ainia", "DALIL", "DIFTA", "Fanesatul Nafsiah", "Faris", "Hibatullah", "Irsan", "JUMRIA", "Laode Ramadani Saputra", "MIRA MUTMAINNA", "Muh. Rehan", "Muh.Erwin", "Muhammad Tanhar", "MUNASYILA", "Mutahara", "Nur Hafiza", "Ramadhani", "Syahrir", "Syahrul Ramadhan", "Wismawati"],
   "X AP 2": ["A. ZHALDY DWI PUTRA", "A.FAUZAN IKSAN", "Deswita Maharani", "ERWIN", "Fahrul", "Jihan", "M. FAHRYL CENDEKIAWAN", "M. NURFADIL", "MABRUR", "MAGFIR", "MUH. RAIHAN ZHAKI", "MUHAMMAD RAYYAN", "Mutia Syafira", "Mutiara F", "Nikra Maulana", "NURUL HAFISAH UMAIRAH", "RAIHAN MUZAKI", "SAHRA", "Sahril", "SALFINA", "Wahidin", "ZALVA ZAHIRA"],
@@ -39,7 +39,7 @@ const App: React.FC = () => {
       mapel: "PJOK",
       waliKelas: [],
       siswaBinaan: [],
-      foto: "data:image/jpeg;base64,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",
+      foto: "data:image/jpeg;base64,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",
       namaSekolah: "UPT SMKN 4 SINJAI",
       namaKepsek: "",
       nipKepsek: ""
@@ -84,11 +84,12 @@ const App: React.FC = () => {
 
   const applyData = useCallback((data: any) => {
     if (data && typeof data === 'object' && Object.keys(data).length > 0) {
-      if (data.pengaturan) setPengaturan(data.pengaturan);
+      // Menggunakan Functional State Update untuk mencegah data hilang jika partial
+      if (data.pengaturan) setPengaturan(prev => ({ ...prev, ...data.pengaturan }));
       if (data.jurnalData) setJurnalData(data.jurnalData);
       if (data.absensiData) setAbsensiData(data.absensiData);
-      if (data.siswaData) setSiswaData(data.siswaData);
-      if (data.kelasData) setKelasData(data.kelasData);
+      if (data.siswaData && Object.keys(data.siswaData).length > 0) setSiswaData(data.siswaData);
+      if (data.kelasData && data.kelasData.length > 0) setKelasData(data.kelasData);
       if (data.jamData) setJamData(data.jamData);
       if (data.waliData) setWaliData(data.waliData);
       return true;
@@ -102,6 +103,10 @@ const App: React.FC = () => {
         const cloudData = await cloudSync.load();
         if (cloudData && Object.keys(cloudData).length > 0) {
           applyData(cloudData);
+        } else {
+          // Jika cloud kosong, pastikan siswaData minimal berisi initial data
+          setSiswaData(prev => Object.keys(prev).length === 0 ? initialMuridData : prev);
+          setKelasData(prev => prev.length === 0 ? initialKelasData : prev);
         }
       } catch (e) {
         console.error("Gagal sinkronisasi awal:", e);
@@ -117,13 +122,12 @@ const App: React.FC = () => {
 
   const handleCloudSave = async () => {
     setIsSyncing(true);
-    // Seluruh data termasuk siswaData dikirim ke Cloud (Google Sheets)
     const allData = { pengaturan, jurnalData, absensiData, siswaData, kelasData, jamData, waliData };
     try {
       await cloudSync.save(allData);
-      showNotification("✅ Data (termasuk Murid) berhasil dikirim ke Cloud!");
+      showNotification("✅ Seluruh data berhasil tersimpan di Cloud.");
     } catch (e) {
-      showNotification("❌ Gagal menyimpan.");
+      showNotification("❌ Simpan Cloud Gagal. Cek URL Apps Script Bapak.");
     } finally {
       setIsSyncing(false);
     }
@@ -134,12 +138,12 @@ const App: React.FC = () => {
     try {
       const data = await cloudSync.load();
       if (applyData(data)) {
-        showNotification("✅ Data terbaru dimuat dari Cloud.");
+        showNotification("✅ Sinkronisasi Berhasil. Data terbaru dimuat.");
       } else {
-        showNotification("ℹ️ Cloud Kosong.");
+        showNotification("ℹ️ Cloud Kosong. Menggunakan data lokal.");
       }
     } catch (e) {
-      showNotification("❌ Gagal memuat Cloud.");
+      showNotification("❌ Muat Cloud Gagal.");
     } finally {
       setIsSyncing(false);
     }
@@ -148,7 +152,7 @@ const App: React.FC = () => {
   const forceLoadDefaultMurid = () => {
     setSiswaData(initialMuridData);
     setKelasData(initialKelasData);
-    showNotification("✅ Database Murid di-reset ke data Bapak.");
+    showNotification("✅ Database Murid di-reset ke data bawaan Bapak Ariansyah.");
   };
 
   if (isInitialLoading) {
@@ -156,7 +160,7 @@ const App: React.FC = () => {
       <div className="min-h-screen bg-teal-50 flex flex-col items-center justify-center p-4 text-center">
         <div className="loader w-14 h-14 border-teal-600 border-t-transparent mb-6"></div>
         <h2 className="text-2xl font-bold text-teal-800 animate-pulse uppercase">Sinkronisasi Cloud...</h2>
-        <p className="text-teal-600 text-xs mt-3 font-bold tracking-widest uppercase">Memuat Data Bapak Ariansyah</p>
+        <p className="text-teal-600 text-[10px] mt-3 font-bold tracking-widest uppercase">UPT SMKN 4 SINJAI</p>
       </div>
     );
   }
