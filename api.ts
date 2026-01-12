@@ -1,58 +1,52 @@
 
 /**
- * PANDUAN GOOGLE APPS SCRIPT:
+ * PANDUAN DEPLOYMENT (PENTING):
  * 
- * 1. Buka Google Sheets (beri nama "Manajemen Guru Mapel").
- * 2. Extensions > Apps Script.
- * 3. Copy-Paste kode di bawah ini ke editor Apps Script:
- * 
- * function doGet() {
- *   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("CloudData");
- *   if(!sheet) return ContentService.createTextOutput(JSON.stringify({})).setMimeType(ContentService.MimeType.JSON);
- *   var data = sheet.getRange(1, 1).getValue();
- *   return ContentService.createTextOutput(data || "{}").setMimeType(ContentService.MimeType.JSON);
- * }
- * 
- * function doPost(e) {
- *   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("CloudData");
- *   if(!sheet) sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet("CloudData");
- *   sheet.getRange(1, 1).setValue(e.postData.contents);
- *   return ContentService.createTextOutput(JSON.stringify({status: "success"})).setMimeType(ContentService.MimeType.JSON);
- * }
- * 
- * 4. Deploy > New Deployment > Web App > Access: Anyone.
- * 5. Copy URL-nya dan tempel di SCRIPT_URL di bawah ini.
+ * 1. Tempel kode Google Apps Script yang saya berikan di pesan sebelumnya ke Editor Apps Script.
+ * 2. Klik "Deploy" -> "New Deployment".
+ * 3. Pilih "Web App".
+ * 4. Execute As: "Me" (Email Bapak).
+ * 5. Who has access: "Anyone".
+ * 6. Klik "Deploy".
+ * 7. Copy "Web App URL" dan tempel di SCRIPT_URL di bawah ini.
  */
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyWtVYu1_zH7gfSAgJoSADb6LSk50416pqfBzJO8AGpgzuC9NW4sK6G0Sdpr6hm_e2qew/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyCpVnWpJ19X3pAHEG4dBEcjNlnZc8VqDQDkVKx0-UEDQmbkQmY6HJYvpjQ4yerR5j9_Q/exec';
 
 export const cloudSync = {
   save: async (data: any) => {
     try {
-      const response = await fetch(SCRIPT_URL, {
+      // Gunakan stringify sekali saja untuk memastikan format valid
+      const payload = JSON.stringify(data);
+      
+      await fetch(SCRIPT_URL, {
         method: 'POST',
-        mode: 'no-cors', // Penting untuk Google Apps Script agar tidak error CORS saat save
+        mode: 'no-cors', // Mode no-cors diperlukan untuk Google Apps Script
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: payload,
       });
-      // Karena no-cors, kita tidak bisa baca response body, tapi data biasanya tetap masuk
       return { status: "success" };
     } catch (error) {
-      console.error('Save failed:', error);
+      console.error('Simpan ke Cloud gagal:', error);
       throw error;
     }
   },
   load: async () => {
     try {
-      // Menambahkan timestamp (?t=...) agar browser tidak mengambil data lama dari cache
+      // Menambahkan timestamp t=... untuk mencegah browser mengambil cache lama
       const response = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
-      const data = await response.json();
-      return data;
+      if (!response.ok) throw new Error('Network response was not ok');
+      
+      const text = await response.text();
+      // Parsing data dengan aman
+      if (!text || text === "{}") return {};
+      
+      return JSON.parse(text);
     } catch (error) {
-      console.error('Load failed:', error);
-      throw error;
+      console.error('Muat dari Cloud gagal:', error);
+      return null;
     }
   }
 };
