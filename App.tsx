@@ -18,7 +18,7 @@ import PengaturanTab from './components/PengaturanTab';
 
 const App: React.FC = () => {
   // --- States ---
-  // Default values updated for NIP: 199002082022211011 and School: UPT SMKN 4 SINJAI
+  // Identitas Pak Ariansyah Imran sebagai default
   const [pengaturan, setPengaturan] = useState<PengaturanData>(() => JSON.parse(localStorage.getItem('pengaturanData') || '{"nama":"Ariansyah Imran, S.Pd.,Gr","nip":"199002082022211011","jabatan":"Guru PJOK","mapel":"PJOK","waliKelas":[],"siswaBinaan":[],"foto":"https://picsum.photos/200/200","namaSekolah":"UPT SMKN 4 SINJAI","namaKepsek":"","nipKepsek":""}'));
   const [jurnalData, setJurnalData] = useState<JurnalData>(() => JSON.parse(localStorage.getItem('jurnalData') || '{}'));
   const [absensiData, setAbsensiData] = useState<AbsensiData>(() => JSON.parse(localStorage.getItem('absensiData') || '{}'));
@@ -77,27 +77,15 @@ const App: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4 sm:p-6">
-      {/* Tombol Sinkronisasi Floating */}
       <div className="fixed bottom-6 right-6 flex flex-col gap-2 no-print z-40">
-        <button 
-          onClick={handleCloudSync}
-          disabled={isSyncing}
-          className="bg-blue-600 text-white p-4 rounded-full shadow-2xl hover:bg-blue-700 transition-all flex items-center gap-2"
-          title="Simpan ke Cloud"
-        >
+        <button onClick={handleCloudSync} disabled={isSyncing} className="bg-blue-600 text-white p-4 rounded-full shadow-2xl hover:bg-blue-700 transition-all flex items-center gap-2">
           {isSyncing ? <div className="loader" /> : "☁️ Simpan Cloud"}
         </button>
-        <button 
-          onClick={handleLoadFromCloud}
-          disabled={isSyncing}
-          className="bg-orange-500 text-white p-4 rounded-full shadow-2xl hover:bg-orange-600 transition-all flex items-center gap-2"
-          title="Muat dari Cloud"
-        >
+        <button onClick={handleLoadFromCloud} disabled={isSyncing} className="bg-orange-500 text-white p-4 rounded-full shadow-2xl hover:bg-orange-600 transition-all flex items-center gap-2">
           {isSyncing ? <div className="loader" /> : "📥 Muat Cloud"}
         </button>
       </div>
 
-      {/* Header */}
       <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200">
         <div className="flex flex-col md:flex-row items-center justify-between mb-4">
           <div className="flex items-center space-x-4 mb-4 md:mb-0">
@@ -113,23 +101,22 @@ const App: React.FC = () => {
           <div className="text-center md:text-right">
             <div className="bg-teal-50 px-4 py-2 rounded-lg border border-teal-100">
               <p className="text-sm text-gray-600">{pengaturan.namaSekolah}</p>
-              <p className="font-semibold text-teal-700">Jurnal & Daftar Hadir (Cloud Enabled)</p>
+              <p className="font-semibold text-teal-700">Database Guru Wali (Cloud Active)</p>
             </div>
           </div>
         </div>
         <div className="text-center border-t border-gray-200 pt-4">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">SISTEM MANAJEMEN GURU</h1>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2 tracking-tight">SISTEM DATABASE GURU WALI</h1>
         </div>
       </div>
 
-      {/* Navigation */}
       <div className="bg-white rounded-xl shadow-md p-2 mb-6 no-print overflow-x-auto">
         <div className="flex flex-nowrap md:flex-wrap justify-start md:justify-center gap-2">
           {['jurnal', 'absensi', 'guru-wali', 'laporan', 'siswa', 'kelas', 'pengaturan'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab as TabType)}
-              className={`capitalize py-2 px-4 font-medium rounded-lg transition ${
+              className={`capitalize py-2 px-4 font-medium rounded-lg transition whitespace-nowrap ${
                 activeTab === tab ? 'bg-teal-600 text-white shadow-md' : 'text-gray-600 hover:bg-teal-50'
               }`}
             >
@@ -139,7 +126,6 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* Tab Content */}
       <div className="transition-opacity duration-300">
         {activeTab === 'jurnal' && <JurnalTab pengaturan={pengaturan} jurnalData={jurnalData} setJurnalData={setJurnalData} kelasData={kelasData} jamData={jamData} showNotification={showNotification} />}
         {activeTab === 'absensi' && <AbsensiTab absensiData={absensiData} setAbsensiData={setAbsensiData} kelasData={kelasData} siswaData={siswaData} showNotification={showNotification} />}
@@ -150,12 +136,10 @@ const App: React.FC = () => {
         {activeTab === 'pengaturan' && <PengaturanTab pengaturan={pengaturan} setPengaturan={setPengaturan} kelasData={kelasData} siswaData={siswaData} showNotification={showNotification} />}
       </div>
 
-      {/* Footer */}
       <footer className="text-center py-6 mt-8">
-        <p className="text-gray-500 text-sm">© 2025 @pakarisensei - Terhubung ke Google Cloud</p>
+        <p className="text-gray-500 text-sm">© 2025 Database Guru Wali - {pengaturan.namaSekolah}</p>
       </footer>
 
-      {/* Notification */}
       {notification.show && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm text-center">

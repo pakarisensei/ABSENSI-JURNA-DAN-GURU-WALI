@@ -1,5 +1,5 @@
 {
-  "name": "Sistem Jurnal & Daftar Hadir Guru",
-  "description": "A comprehensive teacher journal and attendance management system featuring AI-powered lesson planning, homeroom teacher logs, and professional PDF reporting.",
+  "name": "Sistem Database Guru Wali",
+  "description": "Sistem manajemen terintegrasi untuk Jurnal, Absensi, dan Bimbingan Guru Wali UPT SMKN 4 SINJAI.",
   "requestFramePermissions": []
 }
