@@ -5,14 +5,14 @@ export interface PengaturanData {
   jabatan: string;
   mapel: string;
   waliKelas: string[];
-  siswaBinaan: SiswaBinaan[];
+  siswaBinaan: MuridBinaan[];
   foto: string;
   namaSekolah: string;
   namaKepsek: string;
   nipKepsek: string;
 }
 
-export interface SiswaBinaan {
+export interface MuridBinaan {
   nama: string;
   kelas: string;
 }
@@ -33,7 +33,7 @@ export interface JurnalData {
 export interface AbsensiData {
   [tanggal: string]: {
     [kelas: string]: {
-      [siswa: string]: 'H' | 'S' | 'I' | 'A';
+      [murid: string]: 'H' | 'S' | 'I' | 'A';
     };
   };
 }
@@ -51,4 +51,4 @@ export interface WaliRecord {
   tindakLanjut: string;
 }
 
-export type TabType = 'jurnal' | 'absensi' | 'guru-wali' | 'laporan' | 'siswa' | 'kelas' | 'pengaturan';
+export type TabType = 'jurnal' | 'absensi' | 'guru-wali' | 'laporan' | 'murid' | 'kelas' | 'pengaturan';

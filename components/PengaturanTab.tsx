@@ -27,18 +27,16 @@ const PengaturanTab: React.FC<PengaturanTabProps> = ({
     showNotification("✅ Pengaturan profil disimpan.");
   };
 
-  // Fungsi Kompresi Gambar agar muat di Google Sheets (Limit 50k char)
   const compressImage = (base64Str: string): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image();
       img.src = base64Str;
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 150; // Ukuran kecil sudah cukup untuk profil
+        const MAX_WIDTH = 150;
         const MAX_HEIGHT = 150;
         let width = img.width;
         let height = img.height;
-
         if (width > height) {
           if (width > MAX_WIDTH) {
             height *= MAX_WIDTH / width;
@@ -50,13 +48,10 @@ const PengaturanTab: React.FC<PengaturanTabProps> = ({
             height = MAX_HEIGHT;
           }
         }
-
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
-        
-        // Kompres kualitas ke 0.7 (70%)
         resolve(canvas.toDataURL('image/jpeg', 0.7));
       };
     });
@@ -69,7 +64,6 @@ const PengaturanTab: React.FC<PengaturanTabProps> = ({
       const reader = new FileReader();
       reader.onloadend = async () => {
         const base64 = reader.result as string;
-        // Perkecil gambar sebelum dimasukkan ke state
         const compressed = await compressImage(base64);
         setLocalData({ ...localData, foto: compressed });
         setIsProcessing(false);
@@ -109,21 +103,11 @@ const PengaturanTab: React.FC<PengaturanTabProps> = ({
     <div className="bg-white rounded-xl shadow-lg p-6">
       <h2 className="text-2xl font-bold text-gray-800 mb-6">⚙️ Pengaturan Profil</h2>
       <form onSubmit={handleSave} className="space-y-6">
-        
-        {/* Bagian Foto Profil */}
         <div className="flex flex-col md:flex-row items-center gap-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
           <div className="relative group">
             <div className={`w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg ${isProcessing ? 'opacity-50' : ''}`}>
-              <img 
-                src={localData.foto} 
-                alt="Preview" 
-                className="w-full h-full object-cover"
-              />
-              {isProcessing && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="loader !border-teal-600" />
-                </div>
-              )}
+              <img src={localData.foto} alt="Preview" className="w-full h-full object-cover" />
+              {isProcessing && <div className="absolute inset-0 flex items-center justify-center"><div className="loader !border-teal-600" /></div>}
             </div>
             <label className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 text-white text-[10px] opacity-0 group-hover:opacity-100 rounded-full cursor-pointer transition-opacity uppercase font-bold">
               Klik Ganti
@@ -132,14 +116,7 @@ const PengaturanTab: React.FC<PengaturanTabProps> = ({
           </div>
           <div className="flex-grow text-center md:text-left">
             <h4 className="font-bold text-gray-700">Foto Profil</h4>
-            <p className="text-[10px] text-gray-500 mb-3 uppercase tracking-tighter">Sistem akan otomatis mengompres foto agar lancar disimpan di Cloud.</p>
-            <input 
-              type="file" 
-              accept="image/*" 
-              onChange={handleFileChange}
-              disabled={isProcessing}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 cursor-pointer"
-            />
+            <p className="text-[10px] text-gray-500 mb-3 uppercase tracking-tighter">Sistem otomatis mengompres foto profil Anda.</p>
           </div>
         </div>
 
@@ -177,17 +154,17 @@ const PengaturanTab: React.FC<PengaturanTabProps> = ({
         </div>
 
         <div className="border-t pt-4">
-          <h3 className="font-bold mb-2 text-gray-800">Siswa Binaan (Khusus Guru Wali)</h3>
+          <h3 className="font-bold mb-2 text-gray-800">Murid Binaan (Khusus Guru Wali)</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
             <select value={binSiswa.kelas} onChange={e => setBinSiswa({...binSiswa, kelas: e.target.value, nama: ''})} className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
               <option value="">Pilih Kelas</option>
               {localData.waliKelas.map(k => <option key={k} value={k}>{k}</option>)}
             </select>
             <select value={binSiswa.nama} onChange={e => setBinSiswa({...binSiswa, nama: e.target.value})} className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
-              <option value="">Pilih Siswa</option>
+              <option value="">Pilih Murid</option>
               {(siswaData[binSiswa.kelas] || []).map(s => <option key={s} value={s}>{s}</option>)}
             </select>
-            <button type="button" onClick={addSiswaBinaan} className="bg-teal-600 text-white rounded-lg font-bold hover:bg-teal-700 transition">Tambah Siswa</button>
+            <button type="button" onClick={addSiswaBinaan} className="bg-teal-600 text-white rounded-lg font-bold hover:bg-teal-700 transition">Tambah Murid</button>
           </div>
           <div className="flex flex-wrap gap-2">
             {localData.siswaBinaan.map((s, idx) => (
@@ -198,7 +175,7 @@ const PengaturanTab: React.FC<PengaturanTabProps> = ({
           </div>
         </div>
 
-        <button type="submit" className="w-full bg-teal-600 text-white py-4 rounded-lg font-bold shadow-lg hover:bg-teal-700 transition-all transform hover:-translate-y-1 active:scale-95">
+        <button type="submit" className="w-full bg-teal-600 text-white py-4 rounded-lg font-bold shadow-lg hover:bg-teal-700 transition-all active:scale-95">
           💾 SIMPAN SEMUA PERUBAHAN
         </button>
       </form>

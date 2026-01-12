@@ -86,14 +86,14 @@ const GuruWaliTab: React.FC<GuruWaliTabProps> = ({
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-4">🧑‍🏫 Jurnal Guru Wali</h2>
+      <h2 className="text-2xl font-bold text-gray-800 mb-4">🧑‍🏫 Jurnal Guru Wali Murid</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <select value={selection.kelas} onChange={e => setSelection({...selection, kelas: e.target.value, siswa: ''})} className="p-3 border rounded-lg">
           <option value="">Pilih Kelas Binaan</option>
           {pengaturan.waliKelas.map(k => <option key={k} value={k}>{k}</option>)}
         </select>
         <select value={selection.siswa} onChange={e => setSelection({...selection, siswa: e.target.value})} className="p-3 border rounded-lg">
-          <option value="">Pilih Siswa</option>
+          <option value="">Pilih Murid</option>
           {studentsInClass.map(s => <option key={s.nama} value={s.nama}>{s.nama}</option>)}
         </select>
       </div>

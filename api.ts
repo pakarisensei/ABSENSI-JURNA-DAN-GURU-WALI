@@ -11,7 +11,7 @@
  * 7. Copy "Web App URL" dan tempel di SCRIPT_URL di bawah ini.
  */
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyCpVnWpJ19X3pAHEG4dBEcjNlnZc8VqDQDkVKx0-UEDQmbkQmY6HJYvpjQ4yerR5j9_Q/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxV1cbE33T0sGMB8XGy6lHAjKezO-a-X8V2Fexx627HpWJe0pFxu_VLlPqnNKXmJVBeuQ/exec';
 
 export const cloudSync = {
   save: async (data: any) => {
