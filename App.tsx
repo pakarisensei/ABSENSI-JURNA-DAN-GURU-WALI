@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   PengaturanData, 
   JurnalData, 
@@ -40,29 +40,45 @@ const App: React.FC = () => {
   useEffect(() => { localStorage.setItem('jamData', JSON.stringify(jamData)); }, [jamData]);
   useEffect(() => { localStorage.setItem('waliData', JSON.stringify(waliData)); }, [waliData]);
 
+  // --- Core Loading Logic ---
+  const applyCloudData = useCallback((data: any) => {
+    if (data && typeof data === 'object') {
+      if (data.pengaturan) setPengaturan(data.pengaturan);
+      if (data.jurnalData) setJurnalData(data.jurnalData);
+      if (data.absensiData) setAbsensiData(data.absensiData);
+      if (data.siswaData) setSiswaData(data.siswaData);
+      if (data.kelasData) setKelasData(data.kelasData);
+      if (data.jamData) setJamData(data.jamData);
+      if (data.waliData) setWaliData(data.waliData);
+      return true;
+    }
+    return false;
+  }, []);
+
   // --- Auto Sync from Cloud on Mount ---
   useEffect(() => {
+    let isMounted = true;
     const loadInitialData = async () => {
       try {
+        console.log("Memulai sinkronisasi otomatis...");
         const data = await cloudSync.load();
-        if (data && data.pengaturan) {
-          setPengaturan(data.pengaturan);
-          if (data.jurnalData) setJurnalData(data.jurnalData);
-          if (data.absensiData) setAbsensiData(data.absensiData);
-          if (data.siswaData) setSiswaData(data.siswaData);
-          if (data.kelasData) setKelasData(data.kelasData);
-          if (data.jamData) setJamData(data.jamData);
-          if (data.waliData) setWaliData(data.waliData);
-          console.log("Data synced from Cloud successfully");
+        if (isMounted) {
+          const success = applyCloudData(data);
+          if (success) {
+            console.log("Data Cloud berhasil diterapkan otomatis.");
+          } else {
+            console.log("Cloud kosong atau format tidak sesuai.");
+          }
         }
       } catch (e) {
         console.error("Auto-sync failed:", e);
       } finally {
-        setIsInitialLoading(false);
+        if (isMounted) setIsInitialLoading(false);
       }
     };
     loadInitialData();
-  }, []);
+    return () => { isMounted = false; };
+  }, [applyCloudData]);
 
   const showNotification = (message: string) => setNotification({ message, show: true });
 
@@ -71,9 +87,9 @@ const App: React.FC = () => {
     const allData = { pengaturan, jurnalData, absensiData, siswaData, kelasData, jamData, waliData };
     try {
       await cloudSync.save(allData);
-      showNotification("✅ Berhasil Sinkron ke Cloud!");
+      showNotification("✅ Data berhasil disimpan ke Cloud!");
     } catch (e) {
-      showNotification("❌ Gagal Sinkron. Periksa koneksi internet atau URL Script.");
+      showNotification("❌ Gagal Simpan. Periksa koneksi atau URL Script.");
     } finally {
       setIsSyncing(false);
     }
@@ -83,15 +99,9 @@ const App: React.FC = () => {
     setIsSyncing(true);
     try {
       const data = await cloudSync.load();
-      if (data && data.pengaturan) {
-        setPengaturan(data.pengaturan);
-        if (data.jurnalData) setJurnalData(data.jurnalData);
-        if (data.absensiData) setAbsensiData(data.absensiData);
-        if (data.siswaData) setSiswaData(data.siswaData);
-        if (data.kelasData) setKelasData(data.kelasData);
-        if (data.jamData) setJamData(data.jamData);
-        if (data.waliData) setWaliData(data.waliData);
-        showNotification("✅ Data berhasil dimuat dari Cloud!");
+      const success = applyCloudData(data);
+      if (success) {
+        showNotification("✅ Data berhasil dimuat ulang dari Cloud!");
       } else {
         showNotification("ℹ️ Cloud kosong atau data tidak ditemukan.");
       }
@@ -106,21 +116,32 @@ const App: React.FC = () => {
     return (
       <div className="min-h-screen bg-teal-50 flex flex-col items-center justify-center p-4">
         <div className="loader w-12 h-12 border-teal-600 border-t-transparent mb-4"></div>
-        <h2 className="text-xl font-bold text-teal-800 animate-pulse">Menyinkronkan Data Cloud...</h2>
-        <p className="text-teal-600 text-sm mt-2">Mohon tunggu sejenak, sedang mengambil data terbaru.</p>
+        <h2 className="text-xl font-bold text-teal-800 animate-pulse">Menyinkronkan Data...</h2>
+        <p className="text-teal-600 text-sm mt-2 text-center">Sedang mengambil data terbaru dari Google Sheets.</p>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto p-4 sm:p-6">
+      {/* Floating Action Buttons */}
       <div className="fixed bottom-6 right-6 flex flex-col gap-2 no-print z-40">
-        <button onClick={handleCloudSync} disabled={isSyncing} className="bg-blue-600 text-white p-4 rounded-full shadow-2xl hover:bg-blue-700 transition-all flex items-center gap-2 group">
-          {isSyncing ? <div className="loader" /> : <span className="group-hover:scale-110 transition">☁️</span>}
+        <button 
+          onClick={handleCloudSync} 
+          disabled={isSyncing} 
+          className="bg-blue-600 text-white p-4 rounded-full shadow-2xl hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 group"
+          title="Simpan Perubahan ke Cloud"
+        >
+          {isSyncing ? <div className="loader" /> : <span className="text-xl">☁️</span>}
           <span className="hidden md:inline font-bold">Simpan Cloud</span>
         </button>
-        <button onClick={handleLoadFromCloud} disabled={isSyncing} className="bg-orange-500 text-white p-4 rounded-full shadow-2xl hover:bg-orange-600 transition-all flex items-center gap-2 group">
-          {isSyncing ? <div className="loader" /> : <span className="group-hover:scale-110 transition">📥</span>}
+        <button 
+          onClick={handleLoadFromCloud} 
+          disabled={isSyncing} 
+          className="bg-orange-500 text-white p-4 rounded-full shadow-2xl hover:bg-orange-600 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 group"
+          title="Muat Ulang Data dari Cloud"
+        >
+          {isSyncing ? <div className="loader" /> : <span className="text-xl">📥</span>}
           <span className="hidden md:inline font-bold">Refresh Cloud</span>
         </button>
       </div>
@@ -142,7 +163,7 @@ const App: React.FC = () => {
               <p className="text-sm text-gray-600">{pengaturan.namaSekolah}</p>
               <div className="flex items-center gap-2 justify-center md:justify-end">
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                <p className="font-semibold text-teal-700 text-xs uppercase tracking-wider">Cloud Synchronized</p>
+                <p className="font-semibold text-teal-700 text-xs uppercase tracking-wider">Cloud Connected</p>
               </div>
             </div>
           </div>
@@ -183,10 +204,10 @@ const App: React.FC = () => {
       </footer>
 
       {notification.show && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm text-center">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm text-center transform scale-100 transition-transform">
             <p className="font-medium text-gray-800">{notification.message}</p>
-            <button onClick={() => setNotification({ ...notification, show: false })} className="mt-6 w-full bg-teal-600 text-white py-2 rounded-lg hover:bg-teal-700 transition">OK</button>
+            <button onClick={() => setNotification({ ...notification, show: false })} className="mt-6 w-full bg-teal-600 text-white py-2 rounded-lg hover:bg-teal-700 transition font-bold shadow-md">OK</button>
           </div>
         </div>
       )}

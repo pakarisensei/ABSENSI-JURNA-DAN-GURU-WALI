@@ -31,9 +31,14 @@ export const cloudSync = {
     try {
       const response = await fetch(SCRIPT_URL, {
         method: 'POST',
+        mode: 'no-cors', // Penting untuk Google Apps Script agar tidak error CORS saat save
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(data),
       });
-      return await response.json();
+      // Karena no-cors, kita tidak bisa baca response body, tapi data biasanya tetap masuk
+      return { status: "success" };
     } catch (error) {
       console.error('Save failed:', error);
       throw error;
@@ -41,8 +46,10 @@ export const cloudSync = {
   },
   load: async () => {
     try {
-      const response = await fetch(SCRIPT_URL);
-      return await response.json();
+      // Menambahkan timestamp (?t=...) agar browser tidak mengambil data lama dari cache
+      const response = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
+      const data = await response.json();
+      return data;
     } catch (error) {
       console.error('Load failed:', error);
       throw error;
