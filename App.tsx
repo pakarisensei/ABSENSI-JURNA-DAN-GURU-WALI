@@ -34,7 +34,7 @@ const App: React.FC = () => {
   // Flag ini mencegah data default menimpa data Cloud saat startup
   const isReady = useRef(false);
 
-  // --- Persistence Logic (Hanya jalan setelah isReady true) ---
+  // --- Persistence Logic ---
   useEffect(() => {
     if (!isReady.current) return;
     
@@ -45,8 +45,6 @@ const App: React.FC = () => {
     localStorage.setItem('kelasData', JSON.stringify(kelasData));
     localStorage.setItem('jamData', JSON.stringify(jamData));
     localStorage.setItem('waliData', JSON.stringify(waliData));
-    
-    console.log("💾 Data tersimpan ke LocalStorage.");
   }, [pengaturan, jurnalData, absensiData, siswaData, kelasData, jamData, waliData]);
 
   const applyData = useCallback((data: any) => {
@@ -70,14 +68,11 @@ const App: React.FC = () => {
         const cloudData = await cloudSync.load();
         if (cloudData && Object.keys(cloudData).length > 0) {
           applyData(cloudData);
-          console.log("✅ Data Cloud Berhasil Dimuat Otomatis.");
-        } else {
-          console.log("ℹ️ Cloud Kosong, menggunakan data lokal.");
         }
       } catch (e) {
         console.error("Gagal sinkronisasi awal:", e);
       } finally {
-        isReady.current = true; // Kunci dibuka, aplikasi mulai menyimpan perubahan ke localStorage
+        isReady.current = true;
         setIsInitialLoading(false);
       }
     };
@@ -91,9 +86,9 @@ const App: React.FC = () => {
     const allData = { pengaturan, jurnalData, absensiData, siswaData, kelasData, jamData, waliData };
     try {
       await cloudSync.save(allData);
-      showNotification("✅ Data berhasil dikirim ke Google Sheets!");
+      showNotification("✅ Data berhasil dikirim ke Cloud!");
     } catch (e) {
-      showNotification("❌ Terjadi kesalahan saat menyimpan.");
+      showNotification("❌ Gagal menyimpan.");
     } finally {
       setIsSyncing(false);
     }
@@ -104,12 +99,12 @@ const App: React.FC = () => {
     try {
       const data = await cloudSync.load();
       if (applyData(data)) {
-        showNotification("✅ Berhasil memuat data terbaru dari Cloud.");
+        showNotification("✅ Data terbaru dimuat.");
       } else {
-        showNotification("ℹ️ Data Cloud tidak ditemukan atau kosong.");
+        showNotification("ℹ️ Cloud Kosong.");
       }
     } catch (e) {
-      showNotification("❌ Gagal menghubungi Google Sheets.");
+      showNotification("❌ Gagal memuat Cloud.");
     } finally {
       setIsSyncing(false);
     }
@@ -117,77 +112,82 @@ const App: React.FC = () => {
 
   if (isInitialLoading) {
     return (
-      <div className="min-h-screen bg-teal-50 flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen bg-teal-50 flex flex-col items-center justify-center p-4 text-center">
         <div className="loader w-14 h-14 border-teal-600 border-t-transparent mb-6"></div>
-        <h2 className="text-2xl font-bold text-teal-800 animate-pulse">SINKRONISASI CLOUD...</h2>
-        <p className="text-teal-600 text-sm mt-3 font-medium text-center">Tunggu sebentar, kami sedang mengambil data Bapak di Google Sheets.</p>
+        <h2 className="text-2xl font-bold text-teal-800 animate-pulse uppercase">Sinkronisasi Cloud...</h2>
+        <p className="text-teal-600 text-xs mt-3 font-bold tracking-widest uppercase">Memuat Data Administrasi Bapak</p>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:max-w-6xl">
-      {/* Tombol Aksi Melayang */}
-      <div className="fixed bottom-8 right-8 flex flex-col gap-3 no-print z-50">
-        <button 
-          onClick={handleCloudSave} 
-          disabled={isSyncing} 
-          className="bg-blue-600 text-white p-5 rounded-full shadow-2xl hover:bg-blue-700 hover:scale-110 active:scale-90 transition-all flex items-center gap-3"
-          title="Klik untuk Simpan ke Cloud"
-        >
-          {isSyncing ? <div className="loader" /> : <span className="text-2xl">☁️</span>}
-          <span className="hidden md:inline font-black tracking-wide">SIMPAN CLOUD</span>
-        </button>
-        <button 
-          onClick={handleCloudReload} 
-          disabled={isSyncing} 
-          className="bg-orange-500 text-white p-5 rounded-full shadow-2xl hover:bg-orange-600 hover:scale-110 active:scale-90 transition-all flex items-center gap-3"
-          title="Klik untuk Tarik Data dari Cloud"
-        >
-          {isSyncing ? <div className="loader" /> : <span className="text-2xl">📥</span>}
-          <span className="hidden md:inline font-black tracking-wide">MUAT ULANG</span>
-        </button>
-      </div>
-
-      {/* Header Profil */}
-      <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 mb-8 border border-gray-100 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-teal-50 rounded-bl-full -z-10 opacity-50"></div>
-        <div className="flex flex-col md:flex-row items-center justify-between relative z-10">
+      
+      {/* Header Profil Terintegrasi dengan Kontrol Cloud */}
+      <div className="bg-white rounded-3xl shadow-xl p-6 md:p-8 mb-8 border border-gray-100 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-teal-50 rounded-bl-full -z-10 opacity-40"></div>
+        
+        <div className="flex flex-col md:flex-row items-center justify-between relative z-10 gap-6">
+          
+          {/* Sisi Kiri: Foto & Identitas */}
           <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6">
             <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden shadow-xl border-4 border-white ring-4 ring-teal-50">
               <img src={pengaturan.foto} alt="Profile" className="w-full h-full object-cover" />
             </div>
             <div className="text-center md:text-left">
-              <h2 className="text-2xl font-extrabold text-gray-800 tracking-tight">{pengaturan.nama}</h2>
-              <p className="text-gray-500 font-medium">NIP. {pengaturan.nip}</p>
-              <span className="inline-block mt-2 px-3 py-1 bg-teal-600 text-white text-xs font-bold rounded-full uppercase tracking-widest">{pengaturan.jabatan}</span>
+              <h2 className="text-2xl font-extrabold text-gray-800 tracking-tight leading-none">{pengaturan.nama}</h2>
+              <p className="text-gray-500 font-medium text-sm mt-1">NIP. {pengaturan.nip}</p>
+              <span className="inline-block mt-2 px-3 py-1 bg-teal-600 text-white text-[10px] font-black rounded-full uppercase tracking-widest">{pengaturan.jabatan}</span>
             </div>
           </div>
-          <div className="mt-6 md:mt-0 text-center md:text-right">
-            <div className="bg-emerald-50 px-6 py-3 rounded-2xl border border-emerald-100 inline-block">
-              <p className="text-emerald-800 font-bold text-sm uppercase">{pengaturan.namaSekolah}</p>
-              <div className="flex items-center gap-2 justify-center md:justify-end mt-1">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
-                <p className="font-black text-[10px] text-green-700 tracking-tighter uppercase">Cloud Database Online</p>
+
+          {/* Sisi Kanan: Info Sekolah & Tombol Sinkronisasi Kecil */}
+          <div className="flex flex-col items-center md:items-end gap-3 no-print">
+            <div className="bg-white/80 backdrop-blur px-4 py-2 rounded-2xl border border-gray-100 shadow-sm text-center md:text-right">
+              <p className="text-gray-800 font-black text-xs uppercase tracking-tight">{pengaturan.namaSekolah}</p>
+              <div className="flex items-center gap-2 justify-center md:justify-end mt-0.5">
+                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                <p className="font-bold text-[9px] text-green-600 tracking-tighter uppercase">Cloud Database Online</p>
               </div>
+            </div>
+
+            {/* Tombol Kontrol Cloud (Kecil & Rapi) */}
+            <div className="flex gap-2">
+              <button 
+                onClick={handleCloudSave} 
+                disabled={isSyncing} 
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-[10px] font-black tracking-widest uppercase transition-all flex items-center gap-2 shadow-md shadow-blue-100 active:scale-95 disabled:opacity-50"
+              >
+                {isSyncing ? <div className="loader !w-3 !h-3" /> : <span>☁️</span>}
+                SIMPAN CLOUD
+              </button>
+              <button 
+                onClick={handleCloudReload} 
+                disabled={isSyncing} 
+                className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl text-[10px] font-black tracking-widest uppercase transition-all flex items-center gap-2 shadow-md shadow-orange-100 active:scale-95 disabled:opacity-50"
+              >
+                {isSyncing ? <div className="loader !w-3 !h-3" /> : <span>📥</span>}
+                MUAT ULANG
+              </button>
             </div>
           </div>
         </div>
+
         <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-          <h1 className="text-4xl font-black text-gray-900 tracking-tighter uppercase md:text-5xl">MANAJEMEN GURU MAPEL</h1>
+          <h1 className="text-4xl font-black text-gray-900 tracking-tighter uppercase md:text-5xl leading-none">MANAJEMEN GURU MAPEL</h1>
         </div>
       </div>
 
       {/* Navigasi Tab */}
-      <div className="bg-white/80 backdrop-blur-md sticky top-4 z-30 rounded-2xl shadow-lg p-2 mb-8 no-print border border-white/50 overflow-x-auto">
-        <div className="flex flex-nowrap md:flex-wrap justify-start md:justify-center gap-2 min-w-max md:min-w-0">
+      <div className="bg-white/90 backdrop-blur-md sticky top-4 z-30 rounded-2xl shadow-lg p-1.5 mb-8 no-print border border-white/50 overflow-x-auto">
+        <div className="flex flex-nowrap md:flex-wrap justify-start md:justify-center gap-1.5 min-w-max md:min-w-0">
           {['jurnal', 'absensi', 'guru-wali', 'laporan', 'siswa', 'kelas', 'pengaturan'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab as TabType)}
-              className={`capitalize py-3 px-6 font-bold rounded-xl transition-all duration-300 ${
+              className={`capitalize py-2.5 px-5 text-[11px] font-black rounded-xl transition-all duration-300 tracking-wider uppercase ${
                 activeTab === tab 
-                  ? 'bg-teal-600 text-white shadow-lg shadow-teal-200 scale-105' 
+                  ? 'bg-teal-600 text-white shadow-lg shadow-teal-100 scale-105' 
                   : 'text-gray-500 hover:bg-teal-50 hover:text-teal-700'
               }`}
             >
@@ -209,8 +209,8 @@ const App: React.FC = () => {
       </div>
 
       <footer className="text-center py-12 mt-12">
-        <div className="w-16 h-1 bg-teal-200 mx-auto mb-6 rounded-full"></div>
-        <p className="text-gray-400 text-xs font-bold tracking-widest uppercase">© 2025 SISTEM INFORMASI GURU - {pengaturan.namaSekolah}</p>
+        <div className="w-16 h-1 bg-teal-200 mx-auto mb-6 rounded-full opacity-50"></div>
+        <p className="text-gray-400 text-[10px] font-black tracking-[0.2em] uppercase">© 2025 SISTEM INFORMASI GURU - {pengaturan.namaSekolah}</p>
       </footer>
 
       {/* Pop-up Notifikasi */}
@@ -218,10 +218,10 @@ const App: React.FC = () => {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-fade-in">
           <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm text-center transform scale-100 transition-all border border-gray-100">
             <div className="text-5xl mb-4">📢</div>
-            <p className="text-xl font-bold text-gray-800 leading-tight mb-8">{notification.message}</p>
+            <p className="text-lg font-bold text-gray-800 leading-tight mb-8">{notification.message}</p>
             <button 
               onClick={() => setNotification({ ...notification, show: false })} 
-              className="w-full bg-teal-600 text-white py-4 rounded-2xl hover:bg-teal-700 transition font-black shadow-xl shadow-teal-100 active:scale-95"
+              className="w-full bg-teal-600 text-white py-4 rounded-2xl hover:bg-teal-700 transition font-black shadow-xl shadow-teal-100 active:scale-95 text-xs tracking-widest uppercase"
             >
               OKE, MENGERTI
             </button>
