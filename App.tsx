@@ -210,7 +210,9 @@ const App: React.FC = () => {
 
       <footer className="text-center py-12 mt-12">
         <div className="w-16 h-1 bg-teal-200 mx-auto mb-6 rounded-full opacity-50"></div>
-        <p className="text-gray-400 text-[10px] font-black tracking-[0.2em] uppercase">© 2025 SISTEM INFORMASI GURU - {pengaturan.namaSekolah}</p>
+        <p className="text-gray-400 text-[10px] font-black tracking-[0.3em] uppercase">
+          © 2026 COPYRIGHT · ARIANSYAH IMRAN · {pengaturan.namaSekolah}
+        </p>
       </footer>
 
       {/* Pop-up Notifikasi */}
