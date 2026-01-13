@@ -4,7 +4,7 @@
  */
 
 // Ganti URL ini dengan URL Web App dari Google Apps Script Bapak
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby-Sh0e5yCQg0GzJlEU8-OnJxcGHQuFasguz757fYWFSHsJMq8ApgtIRoOuXW5GJe50/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby2CMCkF79vL2aJKxm-wwbx5hklLamBPn1C4hnxXSNlA4pgMT5P7yozQV4caOTu6Lnmaw/exec';
 
 export const cloudSync = {
   /**
