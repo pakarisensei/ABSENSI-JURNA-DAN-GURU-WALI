@@ -1,14 +1,10 @@
 
 /**
- * PANDUAN DEPLOYMENT (PENTING):
+ * PANDUAN CLOUD SYNC:
  * 
- * 1. Tempel kode Google Apps Script yang saya berikan di pesan sebelumnya ke Editor Apps Script.
- * 2. Klik "Deploy" -> "New Deployment".
- * 3. Pilih "Web App".
- * 4. Execute As: "Me" (Email Bapak).
- * 5. Who has access: "Anyone".
- * 6. Klik "Deploy".
- * 7. Copy "Web App URL" dan tempel di SCRIPT_URL di bawah ini.
+ * SCRIPT_URL adalah link Web App dari Google Apps Script Bapak.
+ * Pastikan fungsi doPost(e) di script tersebut menggunakan:
+ * var data = JSON.parse(e.postData.contents);
  */
 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxV1cbE33T0sGMB8XGy6lHAjKezO-a-X8V2Fexx627HpWJe0pFxu_VLlPqnNKXmJVBeuQ/exec';
@@ -16,17 +12,19 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxV1cbE33T0sGMB8XGy6
 export const cloudSync = {
   save: async (data: any) => {
     try {
-      // Gunakan stringify sekali saja untuk memastikan format valid
       const payload = JSON.stringify(data);
       
+      // Menggunakan mode: 'no-cors' agar tidak terhambat kebijakan browser
+      // Data tetap terkirim ke Google Apps Script melalui postData.contents
       await fetch(SCRIPT_URL, {
         method: 'POST',
-        mode: 'no-cors', // Mode no-cors diperlukan untuk Google Apps Script
+        mode: 'no-cors', 
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'text/plain;charset=utf-8',
         },
         body: payload,
       });
+
       return { status: "success" };
     } catch (error) {
       console.error('Simpan ke Cloud gagal:', error);
@@ -35,13 +33,15 @@ export const cloudSync = {
   },
   load: async () => {
     try {
-      // Menambahkan timestamp t=... untuk mencegah browser mengambil cache lama
       const response = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
-      if (!response.ok) throw new Error('Network response was not ok');
+      if (!response.ok) throw new Error('Gagal menghubungi server Cloud.');
       
       const text = await response.text();
-      // Parsing data dengan aman
-      if (!text || text === "{}") return {};
+      
+      if (!text || text.trim() === "" || text.includes("<!DOCTYPE") || text.trim() === "{}") {
+        console.warn("Cloud masih kosong.");
+        return null;
+      }
       
       return JSON.parse(text);
     } catch (error) {

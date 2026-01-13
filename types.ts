@@ -8,8 +8,10 @@ export interface PengaturanData {
   siswaBinaan: MuridBinaan[];
   foto: string;
   namaSekolah: string;
+  // Data Kepala Sekolah
   namaKepsek: string;
   nipKepsek: string;
+  jabatanKepsek: string;
 }
 
 export interface MuridBinaan {
