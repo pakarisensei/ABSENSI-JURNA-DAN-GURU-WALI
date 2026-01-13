@@ -1,51 +1,60 @@
 
 /**
- * PANDUAN CLOUD SYNC:
- * 
- * SCRIPT_URL adalah link Web App dari Google Apps Script Bapak.
- * Pastikan fungsi doPost(e) di script tersebut menggunakan:
- * var data = JSON.parse(e.postData.contents);
+ * CLOUD SYNC SETTINGS - 7-SHEET STABLE VERSION
  */
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxV1cbE33T0sGMB8XGy6lHAjKezO-a-X8V2Fexx627HpWJe0pFxu_VLlPqnNKXmJVBeuQ/exec';
+// Ganti URL ini dengan URL Web App dari Google Apps Script Bapak
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby-Sh0e5yCQg0GzJlEU8-OnJxcGHQuFasguz757fYWFSHsJMq8ApgtIRoOuXW5GJe50/exec';
 
 export const cloudSync = {
-  save: async (data: any) => {
+  /**
+   * Menyimpan seluruh data aplikasi ke 7 Sheet berbeda secara atomik
+   */
+  saveAll: async (fullData: any) => {
     try {
-      const payload = JSON.stringify(data);
+      const payload = JSON.stringify({
+        action: 'save_all',
+        payload: fullData,
+        timestamp: new Date().toISOString()
+      });
       
-      // Menggunakan mode: 'no-cors' agar tidak terhambat kebijakan browser
-      // Data tetap terkirim ke Google Apps Script melalui postData.contents
+      // Menggunakan text/plain agar tidak memicu preflight CORS yang rumit di Apps Script
       await fetch(SCRIPT_URL, {
         method: 'POST',
-        mode: 'no-cors', 
+        mode: 'no-cors',
         headers: {
           'Content-Type': 'text/plain;charset=utf-8',
         },
         body: payload,
       });
 
-      return { status: "success" };
+      return true;
     } catch (error) {
-      console.error('Simpan ke Cloud gagal:', error);
-      throw error;
+      console.error("Gagal sinkronisasi total:", error);
+      return false;
     }
   },
+
+  /**
+   * Memuat seluruh data dari 7 Sheet sekaligus
+   */
   load: async () => {
     try {
-      const response = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
-      if (!response.ok) throw new Error('Gagal menghubungi server Cloud.');
+      const response = await fetch(`${SCRIPT_URL}?action=load_all&t=${Date.now()}`, {
+        method: 'GET',
+        cache: 'no-store',
+      });
+
+      if (!response.ok) throw new Error('Koneksi ke server Cloud bermasalah');
       
-      const text = await response.text();
+      const result = await response.json();
       
-      if (!text || text.trim() === "" || text.includes("<!DOCTYPE") || text.trim() === "{}") {
-        console.warn("Cloud masih kosong.");
-        return null;
+      if (result.status === 'success') {
+        return result.data;
       }
-      
-      return JSON.parse(text);
+      return null;
     } catch (error) {
-      console.error('Muat dari Cloud gagal:', error);
+      console.error('Load data Cloud error:', error);
       return null;
     }
   }
