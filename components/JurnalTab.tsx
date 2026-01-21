@@ -112,7 +112,8 @@ const JurnalTab: React.FC<JurnalTabProps> = ({
 
   const allEntries = useMemo(() => {
     const list: { date: string, entry: JurnalEntry }[] = [];
-    Object.entries(jurnalData).forEach(([date, entries]) => entries.forEach(entry => list.push({ date, entry })));
+    // Fix: Explicitly cast entries to JurnalEntry[] to avoid 'unknown' type error in Object.entries
+    Object.entries(jurnalData).forEach(([date, entries]) => (entries as JurnalEntry[]).forEach(entry => list.push({ date, entry })));
     return list.sort((a, b) => b.date.localeCompare(a.date) || a.entry.jam.localeCompare(b.entry.jam))
                .filter(item => 
                  item.entry.materi.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -198,7 +199,7 @@ const JurnalTab: React.FC<JurnalTabProps> = ({
         </div>
 
         {allEntries.length === 0 ? (
-          <div className="text-center py-20 bg-gray-50 rounded-[40px] border-2 border-dashed text-gray-300 font-bold uppercase text-[10px] tracking-widest">
+          <div className="text-center py-20 bg-gray-50 rounded-[40px] border-2 border-dashed text-gray-300 font-black text-[11px] uppercase tracking-widest">
             {searchTerm ? "Tidak ada hasil pencarian" : "Belum ada riwayat jurnal"}
           </div>
         ) : (

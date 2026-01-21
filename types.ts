@@ -8,7 +8,6 @@ export interface PengaturanData {
   siswaBinaan: MuridBinaan[];
   foto: string;
   namaSekolah: string;
-  // Data Kepala Sekolah
   namaKepsek: string;
   nipKepsek: string;
   jabatanKepsek: string;
@@ -40,6 +39,21 @@ export interface AbsensiData {
   };
 }
 
+export interface GradeRecord {
+  tp_m1_1: string; tp_m1_2: string; tp_m1_3: string;
+  tp_m2_1: string; tp_m2_2: string; tp_m2_3: string;
+  tp_m3_1: string; tp_m3_2: string; tp_m3_3: string;
+  lm1: string; lm2: string; lm3: string;
+  akse: string;
+  nilRap: string;
+}
+
+export interface NilaiData {
+  [kelas: string]: {
+    [murid: string]: GradeRecord;
+  };
+}
+
 export interface WaliRecord {
   id: number;
   siswa: string;
@@ -55,4 +69,4 @@ export interface WaliRecord {
   tindakLanjut: string;
 }
 
-export type TabType = 'jurnal' | 'absensi' | 'guru-wali' | 'laporan' | 'murid' | 'kelas' | 'pengaturan';
+export type TabType = 'jurnal' | 'absensi' | 'nilai' | 'guru-wali' | 'laporan' | 'murid' | 'kelas' | 'pengaturan';

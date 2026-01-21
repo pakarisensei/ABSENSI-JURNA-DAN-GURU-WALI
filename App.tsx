@@ -4,12 +4,14 @@ import {
   PengaturanData, 
   JurnalData, 
   AbsensiData, 
+  NilaiData,
   TabType, 
   WaliRecord
 } from './types';
 import { cloudSync } from './api';
 import JurnalTab from './components/JurnalTab';
 import AbsensiTab from './components/AbsensiTab';
+import NilaiTab from './components/NilaiTab';
 import GuruWaliTab from './components/GuruWaliTab';
 import LaporanTab from './components/LaporanTab';
 import SiswaTab from './components/SiswaTab';
@@ -32,7 +34,7 @@ const defaultPengaturan: PengaturanData = {
   nip: "199002082022211011",
   jabatan: "Guru PJOK",
   mapel: "PJOK",
-  waliKelas: ["X AP 1", "X AP 2", "XI AP 1", "XI AP 2", "XII AP 1", "XII AP 2"],
+  waliKelas: initialKelasData,
   siswaBinaan: [
     { nama: "DALIL", kelas: "X AP 1" },
     { nama: "Faris", kelas: "X AP 1" },
@@ -43,7 +45,7 @@ const defaultPengaturan: PengaturanData = {
     { nama: "ZAID", kelas: "XII AP 1" },
     { nama: "IRFAN GUNAWAN", kelas: "XII AP 2" }
   ],
-  foto: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ariansyah",
+  foto: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgMvAD7o1CcBBXq-J7DuW4hD2zV396xXZfEC-PMEd21Ww4Yx0-WE0EGYSZHh5qQWt9Vdpii69JIFHF3AZa-wQByDFibz-c89-Iu6vR4mekguDjUJBRsCZzYZZ9aUl-EoIYbMSKARA9UFOsvZhNtMUum81DyXgAsZZZzl6eA0Nd64J3WexjVpmyJKhZycbEg/s4382/73%20-%20ARIANSYAH%20IMRAN,%20S.Pd.%20-%20SMKN%204%20SINJAI.JPG",
   namaSekolah: "UPT SMKN 4 SINJAI",
   namaKepsek: "Andi Aminah, S.Pd.,Gr",
   nipKepsek: "197010092006042002",
@@ -63,6 +65,11 @@ const App: React.FC = () => {
 
   const [absensiData, setAbsensiData] = useState<AbsensiData>(() => {
     const saved = localStorage.getItem('absensiData');
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  const [nilaiData, setNilaiData] = useState<NilaiData>(() => {
+    const saved = localStorage.getItem('nilaiData');
     return saved ? JSON.parse(saved) : {};
   });
 
@@ -96,10 +103,10 @@ const App: React.FC = () => {
     setTimeout(() => setNotification(null), 3000);
   }, []);
 
-  // Simpan ke localStorage setiap ada perubahan (Auto-Save Lokal)
   useEffect(() => { localStorage.setItem('pengaturanData', JSON.stringify(pengaturan)); }, [pengaturan]);
   useEffect(() => { localStorage.setItem('jurnalData', JSON.stringify(jurnalData)); }, [jurnalData]);
   useEffect(() => { localStorage.setItem('absensiData', JSON.stringify(absensiData)); }, [absensiData]);
+  useEffect(() => { localStorage.setItem('nilaiData', JSON.stringify(nilaiData)); }, [nilaiData]);
   useEffect(() => { localStorage.setItem('waliData', JSON.stringify(waliData)); }, [waliData]);
   useEffect(() => { localStorage.setItem('siswaData', JSON.stringify(siswaData)); }, [siswaData]);
   useEffect(() => { localStorage.setItem('kelasData', JSON.stringify(kelasData)); }, [kelasData]);
@@ -107,52 +114,87 @@ const App: React.FC = () => {
 
   const handleSyncAll = async () => {
     setIsSyncing(true);
-    showNotification("🚀 Mengirim Data ke 7 Sheet Cloud...");
-    
+    showNotification("🚀 Mengirim Data ke Cloud...");
     const fullBackup = {
       jurnal: jurnalData,
       absensi: absensiData,
+      nilai: nilaiData,
       wali: waliData,
       murid: siswaData,
       kelas: kelasData,
       jam: jamData,
       pengaturan: pengaturan
     };
-
     const success = await cloudSync.saveAll(fullBackup);
-
     if (success) {
       const now = new Date().toLocaleString('id-ID');
       setLastSync(now);
       localStorage.setItem('lastSyncTime', now);
-      showNotification("✅ DATA 7-SHEET BERHASIL DI-BACKUP!");
+      showNotification("✅ DATA BERHASIL DI-BACKUP!");
     } else {
-      showNotification("⚠️ Gagal Sinkron. Cek koneksi internet.");
+      showNotification("⚠️ Gagal Sinkron. Cek koneksi.");
     }
     setIsSyncing(false);
   };
 
+  const handleMigrasiData = (input: string) => {
+    try {
+      // Membersihkan input dari teks tambahan, mencari pola JSON {..} atau [..]
+      const jsonMatch = input.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+      if (!jsonMatch) {
+        showNotification("⚠️ Kode data tidak ditemukan. Pastikan copy dari Cell A1.");
+        return;
+      }
+      
+      const data = JSON.parse(jsonMatch[0]);
+      
+      // CASE 1: Full Master Backup (DATABASE)
+      if (typeof data === 'object' && !Array.isArray(data) && data !== null) {
+        if (data.pengaturan) setPengaturan(data.pengaturan);
+        if (data.jurnal) setJurnalData(data.jurnal);
+        if (data.absensi) setAbsensiData(data.absensi);
+        if (data.nilai) setNilaiData(data.nilai);
+        if (data.wali) setWaliData(data.wali);
+        if (data.murid) setSiswaData(data.murid);
+        if (data.kelas) setKelasData(data.kelas);
+        if (data.jam) setJamData(data.jam);
+        showNotification("✅ SELURUH DATA DATABASE BERHASIL DIPULIHKAN!");
+      } 
+      // CASE 2: Array of Records (GuruWali)
+      else if (Array.isArray(data)) {
+        if (data.length > 0) {
+          setWaliData(data);
+          showNotification(`✅ ${data.length} DATA GURU WALI BERHASIL DIPULIHKAN!`);
+        } else {
+          showNotification("⚠️ Data Guru Wali kosong.");
+        }
+      } else {
+        showNotification("⚠️ Format data tidak dikenali.");
+      }
+    } catch (err) {
+      showNotification("❌ Gagal: Kode rusak atau salah format.");
+    }
+  };
+
   const loadFromCloud = async () => {
     setIsSyncing(true);
-    showNotification("📥 Mengambil Data dari 7 Sheet...");
+    showNotification("📥 Mengambil Data...");
     try {
       const data = await cloudSync.load();
       if (!data) {
         showNotification("❌ Cloud Kosong atau Gagal Terhubung.");
         return;
       }
-      
-      if (window.confirm(`🔍 Data Cloud Ditemukan. Ingin menimpa data di perangkat Bapak? (Semua data saat ini akan diganti)`)) {
-        // Update semua state dari data Cloud
+      if (window.confirm(`🔍 Data Cloud Ditemukan. Ingin menimpa data di perangkat Bapak?`)) {
         if (data.pengaturan) setPengaturan(data.pengaturan);
         if (data.jurnal) setJurnalData(data.jurnal);
         if (data.absensi) setAbsensiData(data.absensi);
+        if (data.nilai) setNilaiData(data.nilai);
         if (data.wali) setWaliData(data.wali);
         if (data.murid) setSiswaData(data.murid);
         if (data.kelas) setKelasData(data.kelas);
         if (data.jam) setJamData(data.jam);
-        
-        showNotification("✅ SELURUH DATA BERHASIL DIMUAT ULANG!");
+        showNotification("✅ DATA BERHASIL DIMUAT DARI CLOUD!");
       }
     } catch (err) {
       showNotification("❌ Gagal memproses data Cloud.");
@@ -164,7 +206,7 @@ const App: React.FC = () => {
   const NavItem = ({ id, label }: { id: TabType, label: string }) => (
     <button
       onClick={() => setActiveTab(id)}
-      className={`px-6 py-3.5 rounded-2xl transition-all font-black text-[11px] uppercase tracking-widest whitespace-nowrap ${
+      className={`px-5 py-3 rounded-2xl transition-all font-black text-[10px] uppercase tracking-widest whitespace-nowrap ${
         activeTab === id ? 'bg-gray-900 text-white shadow-xl scale-105' : 'text-gray-400 hover:text-teal-600'
       }`}
     >
@@ -173,39 +215,31 @@ const App: React.FC = () => {
   );
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-8 flex flex-col min-h-screen">
+    <div className="max-w-7xl mx-auto p-4 md:p-8 flex flex-col min-h-screen">
       <div className="bg-white rounded-[40px] shadow-sm p-8 mb-6 flex flex-col md:flex-row items-center justify-between border border-gray-100 no-print">
         <div className="flex flex-col md:flex-row items-center gap-6">
-          <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-2xl ring-1 ring-gray-100">
+          <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-xl ring-1 ring-gray-100">
             <img src={pengaturan.foto} alt="Profile" className="w-full h-full object-cover" />
           </div>
           <div className="text-center md:text-left">
-            <h1 className="text-2xl font-black text-gray-800 tracking-tight">{pengaturan.nama}</h1>
-            <p className="text-sm font-bold text-gray-400 mb-2">NIP. {pengaturan.nip}</p>
+            <h1 className="text-xl font-black text-gray-800 tracking-tight">{pengaturan.nama}</h1>
+            <p className="text-xs font-bold text-gray-400 mb-2">NIP. {pengaturan.nip}</p>
             <div className="flex flex-col gap-1">
-               <span className="bg-teal-600 text-white px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest inline-block">
+               <span className="bg-teal-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase tracking-widest inline-block">
                 {pengaturan.jabatan}
                </span>
                {lastSync && (
-                 <p className="text-[8px] font-bold text-teal-400 uppercase tracking-widest mt-1">🕒 TERAKHIR SINKRON: {lastSync}</p>
+                 <p className="text-[7px] font-bold text-teal-400 uppercase tracking-widest mt-1">🕒 SYNC: {lastSync}</p>
                )}
             </div>
           </div>
         </div>
         <div className="flex flex-col gap-3 mt-6 md:mt-0 items-center md:items-end">
           <div className="flex gap-2">
-            <button 
-              onClick={handleSyncAll} 
-              disabled={isSyncing} 
-              className="bg-blue-600 text-white px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 shadow-lg transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
-            >
+            <button onClick={handleSyncAll} disabled={isSyncing} className="bg-blue-600 text-white px-5 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-blue-700 shadow-lg transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2">
               {isSyncing ? <div className="loader !w-3 !h-3" /> : '☁️ SIMPAN CLOUD'}
             </button>
-            <button 
-              onClick={loadFromCloud} 
-              disabled={isSyncing}
-              className="bg-orange-500 text-white px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 shadow-lg transition-all active:scale-95 disabled:opacity-50"
-            >
+            <button onClick={loadFromCloud} disabled={isSyncing} className="bg-orange-500 text-white px-5 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-orange-600 shadow-lg transition-all active:scale-95 disabled:opacity-50">
               📥 MUAT ULANG
             </button>
           </div>
@@ -215,6 +249,7 @@ const App: React.FC = () => {
       <div className="bg-white/80 backdrop-blur-md shadow-sm rounded-[32px] p-2 mb-10 flex justify-start md:justify-center gap-1 border border-gray-100 no-print overflow-x-auto scrollbar-hide">
         <NavItem id="jurnal" label="Jurnal" />
         <NavItem id="absensi" label="Absensi" />
+        <NavItem id="nilai" label="Daftar Nilai" />
         <NavItem id="guru-wali" label="Guru WALI" />
         <NavItem id="laporan" label="Laporan" />
         <NavItem id="murid" label="Murid" />
@@ -225,15 +260,16 @@ const App: React.FC = () => {
       <div className="animate-fade-in flex-grow pb-10">
         {activeTab === 'jurnal' && <JurnalTab pengaturan={pengaturan} jurnalData={jurnalData} setJurnalData={setJurnalData} kelasData={kelasData} jamData={jamData} showNotification={showNotification} />}
         {activeTab === 'absensi' && <AbsensiTab absensiData={absensiData} setAbsensiData={setAbsensiData} kelasData={kelasData} siswaData={siswaData} showNotification={showNotification} />}
+        {activeTab === 'nilai' && <NilaiTab nilaiData={nilaiData} setNilaiData={setNilaiData} kelasData={kelasData} siswaData={siswaData} showNotification={showNotification} />}
         {activeTab === 'guru-wali' && <GuruWaliTab pengaturan={pengaturan} waliData={waliData} setWaliData={setWaliData} showNotification={showNotification} />}
-        {activeTab === 'laporan' && <LaporanTab jurnalData={jurnalData} absensiData={absensiData} pengaturan={pengaturan} waliData={waliData} siswaData={siswaData} showNotification={showNotification} />}
+        {activeTab === 'laporan' && <LaporanTab jurnalData={jurnalData} absensiData={absensiData} nilaiData={nilaiData} pengaturan={pengaturan} waliData={waliData} siswaData={siswaData} kelasData={kelasData} showNotification={showNotification} />}
         {activeTab === 'murid' && <SiswaTab siswaData={siswaData} setSiswaData={setSiswaData} kelasData={kelasData} showNotification={showNotification} />}
         {activeTab === 'kelas' && <KelasTab kelasData={kelasData} setKelasData={setKelasData} jamData={jamData} setJamData={setJamData} showNotification={showNotification} />}
-        {activeTab === 'pengaturan' && <PengaturanTab pengaturan={pengaturan} setPengaturan={setPengaturan} kelasData={kelasData} siswaData={siswaData} showNotification={showNotification} />}
+        {activeTab === 'pengaturan' && <PengaturanTab pengaturan={pengaturan} setPengaturan={setPengaturan} kelasData={kelasData} siswaData={siswaData} showNotification={showNotification} onMigrasi={handleMigrasiData} />}
       </div>
 
       <footer className="mt-auto py-8 text-center no-print border-t border-gray-100 opacity-50">
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">@2026 MANAJEMEN GURU MAPEL - ARIANSYAH IMRAN</p>
+        <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em]">@2026 MANAJEMEN GURU MAPEL - ARIANSYAH IMRAN</p>
       </footer>
 
       {notification && (

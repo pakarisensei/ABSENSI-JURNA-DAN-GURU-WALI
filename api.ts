@@ -1,14 +1,14 @@
 
 /**
- * CLOUD SYNC SETTINGS - 7-SHEET STABLE VERSION
+ * CLOUD SYNC SETTINGS - 8-SHEET VERSION
  */
 
-// Ganti URL ini dengan URL Web App dari Google Apps Script Bapak
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby2CMCkF79vL2aJKxm-wwbx5hklLamBPn1C4hnxXSNlA4pgMT5P7yozQV4caOTu6Lnmaw/exec';
+// URL Web App dari Google Apps Script terbaru Bapak Ariansyah
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyRTtHU2mEM4rt-Qz7tJane8_kO0UqABpl1eXc7_l7eWlRpVIyGD1YDPQZdxxjePDy-/exec';
 
 export const cloudSync = {
   /**
-   * Menyimpan seluruh data aplikasi ke 7 Sheet berbeda secara atomik
+   * Menyimpan seluruh data aplikasi ke 8 Sheet berbeda secara atomik
    */
   saveAll: async (fullData: any) => {
     try {
@@ -18,7 +18,7 @@ export const cloudSync = {
         timestamp: new Date().toISOString()
       });
       
-      // Menggunakan text/plain agar tidak memicu preflight CORS yang rumit di Apps Script
+      // Menggunakan fetch dengan mode no-cors untuk pengiriman ke Apps Script
       await fetch(SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
@@ -36,7 +36,7 @@ export const cloudSync = {
   },
 
   /**
-   * Memuat seluruh data dari 7 Sheet sekaligus
+   * Memuat seluruh data dari 8 Sheet sekaligus
    */
   load: async () => {
     try {
